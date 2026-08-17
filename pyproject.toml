@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools<76"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tsfilter"
+version = "0.1.0"
+description = "Time series filter selection via neural networks)"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
