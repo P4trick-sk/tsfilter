@@ -1,0 +1,14 @@
+TrendGenerator:
+  slope: { low: -1.0, high: 1.0 }
+  intercept: { low: -5.0, high: 5.0 }
+
+SinusGenerator:
+  amplitude: { low: 0.5, high: 5.0 }
+  period: { low: 5, high: 100 }
+
+RandomWalkGenerator:
+  step_std: { low: 0.1, high: 2.0 }
+  start: { low: -5.0, high: 5.0 }
+
+ConstantGenerator:
+  value: { low: -10.0, high: 10.0 }
