@@ -1,0 +1,55 @@
+from __future__ import annotations
+
+import numpy as np
+
+from tsfilter.noise.base import BaseNoise
+
+class GaussianNoise(BaseNoise):
+    def __init__(
+            self,
+            mean=0.0,
+            sigma=0.01,
+            seed: int | None = None
+    ):
+        super().__init__(seed)
+        self.mean = mean
+        self.sigma = sigma
+
+    def _sample(self, length: int) -> np.ndarray:
+        return self.rng.normal(self.mean, self.sigma, size=length)
+
+    def _describe(self) -> dict:
+        return {
+            "noise": "gaussian",
+            "mean": self.mean,
+            "sigma": self.sigma,
+            "seed": self.seed}
+
+class ImpulsiveNoise(BaseNoise):
+    def __init__(
+        self,
+        rate: float = 0.05,
+        amplitude_range: tuple[float, float] = (1.0, 3.0),
+        seed: int | None = None,
+    ):
+        super().__init__(seed)
+        if not 0.0 <= rate <= 1.0:
+            raise ValueError(f"rate must be in [0, 1], got {rate}")
+        self.rate = rate
+        self.amplitude_range = amplitude_range
+
+    def _sample(self, length: int) -> np.ndarray:
+        noise = np.zeros(length)
+        hit_mask = self.rng.random(length) < self.rate           # which points get hit
+        magnitudes = self.rng.uniform(*self.amplitude_range, size=length)
+        signs = self.rng.choice([-1.0, 1.0], size=length)
+        noise[hit_mask] = (signs * magnitudes)[hit_mask]
+        return noise
+
+    def _describe(self) -> dict:
+        return {
+            "noise": "impulsive",
+            "rate": self.rate,
+            "amplitude_range": self.amplitude_range,
+            "seed": self.seed,
+        }

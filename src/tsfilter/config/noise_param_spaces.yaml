@@ -1,0 +1,5 @@
+GaussianNoise:
+  sigma: { low: 0.01, high: 0.5 }
+
+ImpulsiveNoise:
+  rate: { low: 0.01, high: 0.15 }
