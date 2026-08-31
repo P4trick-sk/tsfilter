@@ -10,3 +10,4 @@ class DatasetSample:
     clean: GeneratedSeries
     noisy: NoisySeries
     label: dict | None = None
+    sample_id: str | None = None
