@@ -30,10 +30,10 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--generator-config", type=Path, default=Path("src/tsfilter/config/generator_param_spaces.yaml"),
+        "--generator-config", type=Path, default=Path("config/generator_param_spaces.yaml"),
     )
     parser.add_argument(
-        "--noise-config", type=Path, default=Path("src/tsfilter/config/noise_param_spaces.yaml"),
+        "--noise-config", type=Path, default=Path("config/noise_param_spaces.yaml"),
     )
 
     parser.add_argument("--output", type=Path, required=True, help="Output file path")
