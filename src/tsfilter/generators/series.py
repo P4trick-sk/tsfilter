@@ -66,6 +66,31 @@ class RandomWalkGenerator(BaseGenerator):
             },
         )
 
+class ExponentialGenerator(BaseGenerator):
+    def __init__(
+            self,
+            length: int,
+            initial_value: float,
+            growth_rate: float,
+            seed: int | None = None):
+        super().__init__(length, seed)
+        self.initial_value = initial_value
+        self.growth_rate = growth_rate
+
+    def generate(self) -> GeneratedSeries:
+        t = np.arange(self.length)
+        values = self.initial_value * np.exp(self.growth_rate * t)
+        return GeneratedSeries(
+            values=values,
+            params={
+                "generator": "exponential",
+                "length": self.length,
+                "initial_value": self.initial_value,
+                "growth_rate": self.growth_rate,
+                "seed": self.seed,
+            },
+        )
+
 class SinusGenerator(BaseGenerator):
     def __init__(
         self,
@@ -94,3 +119,5 @@ class SinusGenerator(BaseGenerator):
                 "seed": self.seed,
             },
         )
+
+# TODO: sum of sinus waves

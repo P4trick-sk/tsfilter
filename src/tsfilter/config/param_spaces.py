@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 from tsfilter.generators.series import (
-    TrendGenerator, SinusGenerator, RandomWalkGenerator, ConstantGenerator,
+    TrendGenerator, SinusGenerator, RandomWalkGenerator, ConstantGenerator, ExponentialGenerator,
 )
 from tsfilter.noise.noise import GaussianNoise, ImpulsiveNoise
 from tsfilter.utils.sampling import ParamRange
@@ -13,6 +13,7 @@ GENERATOR_REGISTRY = {
     "TrendGenerator": TrendGenerator,
     "SinusGenerator": SinusGenerator,
     "RandomWalkGenerator": RandomWalkGenerator,
+    "ExponentialGenerator": ExponentialGenerator,
     "ConstantGenerator": ConstantGenerator,
 }
 

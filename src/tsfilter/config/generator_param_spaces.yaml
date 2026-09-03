@@ -10,5 +10,9 @@ RandomWalkGenerator:
   step_std: { low: 0.1, high: 2.0 }
   start: { low: -5.0, high: 5.0 }
 
+ExponentialGenerator:
+  initial_value: { low: -5.0, high: 5.0 }
+  growth_rate: { low: -0.1, high: 0.1 }
+
 ConstantGenerator:
   value: { low: -10.0, high: 10.0 }
