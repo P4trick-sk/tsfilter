@@ -1,5 +1,8 @@
 GaussianNoise:
-  sigma: { low: 0.01, high: 0.5 }
+  sigma: { low: 1, high: 5 }
 
 ImpulsiveNoise:
-  rate: { low: 0.01, high: 0.15 }
+  rate: { low: 0.01, high: 0.1 }
+
+PinkNoise:
+  sigma: { low: 0.05, high: 0.5 }

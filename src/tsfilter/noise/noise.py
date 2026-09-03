@@ -53,3 +53,24 @@ class ImpulsiveNoise(BaseNoise):
             "amplitude_range": self.amplitude_range,
             "seed": self.seed,
         }
+
+class PinkNoise(BaseNoise):
+    def __init__(self, sigma: float = 1.0, seed: int | None = None):
+        super().__init__(seed)
+        self.sigma = sigma
+
+    def _sample(self, length: int) -> np.ndarray:
+        white = self.rng.normal(size=length)
+        spectrum = np.fft.rfft(white)
+        freqs = np.fft.rfftfreq(length)
+
+        scale = np.ones_like(freqs)
+        scale[1:] = 1.0 / np.sqrt(freqs[1:])
+        scale[0] = 0.0
+
+        pink = np.fft.irfft(spectrum * scale, n=length)
+        pink = pink / np.std(pink) * self.sigma
+        return pink
+
+    def _describe(self) -> dict:
+        return {"noise": "pink", "sigma": self.sigma, "seed": self.seed}
