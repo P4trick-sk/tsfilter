@@ -6,3 +6,6 @@ ImpulsiveNoise:
 
 PinkNoise:
   sigma: { low: 0.05, high: 0.5 }
+
+DriftNoise:
+  rate: {low: 0.001, high: 0.01 }

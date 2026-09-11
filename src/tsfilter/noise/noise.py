@@ -74,3 +74,14 @@ class PinkNoise(BaseNoise):
 
     def _describe(self) -> dict:
         return {"noise": "pink", "sigma": self.sigma, "seed": self.seed}
+
+class DriftNoise(BaseNoise):
+    def __init__(self, rate: float = 0.01, seed: int | None = None):
+        super().__init__(seed)
+        self.rate = rate
+
+    def _sample(self, length: int) -> np.ndarray:
+       return np.array(self.rate * np.arange(length))
+
+    def _describe(self) -> dict:
+        return {"noise": "drift", "rate": self.rate, "seed": self.seed}
