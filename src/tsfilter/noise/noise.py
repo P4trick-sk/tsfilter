@@ -85,3 +85,22 @@ class DriftNoise(BaseNoise):
 
     def _describe(self) -> dict:
         return {"noise": "drift", "rate": self.rate, "seed": self.seed}
+
+class OutlierNoise(BaseNoise):
+    def __init__(self, rate: float = 0.02, magnitude_std: tuple[float, float] = (3.0, 6.0), seed: int | None = None):
+        super().__init__(seed)
+        if not 0.0 <= rate <= 1.0:
+            raise ValueError(f"rate must be in [0, 1], got {rate}")
+        self.rate = rate
+        self.magnitude_std = magnitude_std
+
+    def _sample(self, length: int) -> np.ndarray:
+        noise = np.zeros(length)
+        hit_mask = self.rng.random(length) < self.rate
+        magnitudes = self.rng.uniform(*self.magnitude_std, size=length)
+        signs = self.rng.choice([-1.0, 1.0], size=length)
+        noise[hit_mask] = (signs * magnitudes)[hit_mask]
+        return noise
+
+    def _describe(self) -> dict:
+        return {"noise": "outlier", "rate": self.rate, "magnitude_std": self.magnitude_std, "seed": self.seed}

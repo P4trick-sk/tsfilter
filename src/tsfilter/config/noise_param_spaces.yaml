@@ -9,3 +9,6 @@ PinkNoise:
 
 DriftNoise:
   rate: {low: 0.001, high: 0.01 }
+
+OutlierNoise:
+  rate: { low: 0.01, high: 0.1 }

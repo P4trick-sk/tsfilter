@@ -6,7 +6,7 @@ import yaml
 from tsfilter.generators.series import (
     TrendGenerator, SinusGenerator, RandomWalkGenerator, ConstantGenerator, ExponentialGenerator,
 )
-from tsfilter.noise.noise import GaussianNoise, ImpulsiveNoise, PinkNoise, DriftNoise
+from tsfilter.noise.noise import GaussianNoise, ImpulsiveNoise, PinkNoise, DriftNoise, OutlierNoise
 from tsfilter.utils.sampling import ParamRange
 
 GENERATOR_REGISTRY = {
@@ -22,6 +22,7 @@ NOISE_REGISTRY = {
     "ImpulsiveNoise": ImpulsiveNoise,
     "PinkNoise": PinkNoise,
     "DriftNoise": DriftNoise,
+    "OutlierNoise": OutlierNoise,
 }
 
 def load_param_spaces(path: str | Path, registry: dict) -> dict:
