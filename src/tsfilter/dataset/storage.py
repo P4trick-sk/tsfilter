@@ -36,18 +36,20 @@ def _ensure_sample_ids(samples: Sequence[DatasetSample]) -> list[DatasetSample]:
 
 # ---- csv -----------------------------------------------------------------
 
-def to_csv(samples: Sequence[DatasetSample], path: str | Path) -> None:
+def to_csv(samples: Sequence[DatasetSample], output_dir: str | Path) -> None:
     samples = _ensure_sample_ids(samples)
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(["sample_id", "t", "clean", "noisy"])
-        for sample in samples:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for sample in samples:
+        with open(f"{output_dir}/{sample.sample_id}.csv", "w") as file:
+            writer = csv.writer(file)
+            writer.writerow(["t", "clean", "noisy"])
             clean_vals = sample.clean.values
             noisy_vals = sample.noisy.values
+
             for t in range(len(clean_vals)):
-                writer.writerow([sample.sample_id, t, clean_vals[t], noisy_vals[t]])
+                writer.writerow([t, clean_vals[t], noisy_vals[t]])
 
 
 # ---- json (de)serialization helpers --------------------------------------

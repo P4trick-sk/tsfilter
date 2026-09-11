@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
         "--noise-config", type=Path, default=Path("config/noise_param_spaces.yaml"),
     )
 
-    parser.add_argument("--output", type=Path, required=True, help="Output file path")
+    parser.add_argument("--output", type=Path, required=True, help="File path for json, directory path for csv")
     parser.add_argument("--format", choices=["json", "csv"], default="json")
 
     return parser.parse_args()
