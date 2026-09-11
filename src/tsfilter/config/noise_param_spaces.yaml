@@ -1,14 +1,35 @@
 GaussianNoise:
-  sigma: { low: 1, high: 5 }
+  sigma:
+    relative_to: std
+    low: 0.05
+    high: 0.3
 
 ImpulsiveNoise:
   rate: { low: 0.01, high: 0.1 }
+  amplitude_range:
+    relative_to: std
+    low: 1.0
+    high: 2.0
+    high_low: 3.0
+    high_high: 6.0
 
 PinkNoise:
-  sigma: { low: 0.05, high: 0.5 }
+  sigma:
+    relative_to: std
+    low: 0.05
+    high: 0.3
 
 DriftNoise:
-  rate: {low: 0.001, high: 0.01 }
+  total_drift:
+    relative_to: std
+    low: 0.1
+    high: 1.0
 
 OutlierNoise:
-  rate: { low: 0.01, high: 0.1 }
+  rate: { low: 0.01, high: 0.05 }
+  magnitude_std:
+    relative_to: std
+    low: 3.0
+    high: 4.0
+    high_low: 5.0
+    high_high: 6.0

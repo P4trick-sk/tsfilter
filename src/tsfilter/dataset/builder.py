@@ -35,9 +35,8 @@ class DatasetBuilder:
         noise_cls = self.noise_classes[self.rng.integers(len(self.noise_classes))]
 
         generator = self.generator_factory.sample(gen_cls)
-        noise = self.noise_factory.sample(noise_cls)
-
         clean = generator.generate()
+        noise = self.noise_factory.sample(noise_cls, target=clean)
         noisy = noise.apply(clean)
 
         label = self.labeler(clean, noisy) if self.labeler is not None else None

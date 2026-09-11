@@ -76,15 +76,18 @@ class PinkNoise(BaseNoise):
         return {"noise": "pink", "sigma": self.sigma, "seed": self.seed}
 
 class DriftNoise(BaseNoise):
-    def __init__(self, rate: float = 0.01, seed: int | None = None):
+    def __init__(self, total_drift: float, seed: int | None = None):
         super().__init__(seed)
-        self.rate = rate
+        self.total_drift = total_drift
 
     def _sample(self, length: int) -> np.ndarray:
-       return np.array(self.rate * np.arange(length))
+        if length <= 1:
+            return np.zeros(length)
+        rate = self.total_drift / (length - 1)
+        return np.array(rate * np.arange(length))
 
     def _describe(self) -> dict:
-        return {"noise": "drift", "rate": self.rate, "seed": self.seed}
+        return {"noise": "drift", "total_drift": self.total_drift, "seed": self.seed}
 
 class OutlierNoise(BaseNoise):
     def __init__(self, rate: float = 0.02, magnitude_std: tuple[float, float] = (3.0, 6.0), seed: int | None = None):
