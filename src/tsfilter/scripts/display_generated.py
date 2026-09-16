@@ -18,6 +18,13 @@ def parse_args() -> argparse.Namespace:
 		default=Path(__file__).resolve().parents[1] / "data",
 		help="Directory containing CSV files to plot.",
 	)
+	parser.add_argument(
+		"--limit",
+		type=int,
+		default=None,
+		metavar="N",
+		help="Plot only the first N CSV files after sorting by name.",
+	)
 	return parser.parse_args()
 
 
@@ -44,6 +51,8 @@ def main() -> None:
 	args = parse_args()
 	csv_files: list[Path] = list(args.data_dir.glob("*.csv"))
 	csv_files.sort(key=lambda path: path.name)
+	if args.limit is not None:
+		csv_files = csv_files[:args.limit]
 
 	if not csv_files:
 		raise FileNotFoundError(f"No CSV files found in {args.data_dir}")
