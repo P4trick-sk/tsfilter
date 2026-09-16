@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 import numpy as np
 from tsfilter.generators.base import BaseGenerator, GeneratedSeries
 
 class CompositeGenerator(BaseGenerator):
-    def __init__(self, generators: list[BaseGenerator]):
+    def __init__(self, generators: Sequence[BaseGenerator]):
         lengths = {g.length for g in generators}
         if len(lengths) != 1:
             raise ValueError(f"All generators must share one length, got {lengths}")

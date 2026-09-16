@@ -5,7 +5,7 @@ from tsfilter.noise.base import BaseNoise
 import numpy as np
 
 class CompositeNoise(BaseNoise):
-    def __init__(self, noises: list[BaseNoise]):
+    def __init__(self, noises: Sequence[BaseNoise]):
         super().__init__(seed=None)
         self.noises = noises
 
