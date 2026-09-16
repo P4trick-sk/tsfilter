@@ -11,10 +11,6 @@ from tsfilter.noise.factory import RandomNoiseFactory
 from tsfilter.dataset.builder import DatasetBuilder, CompositeConfig
 from tsfilter.dataset import storage
 
-# TODO: co ja by som chcel je, ze zadam zoznam generatorov, to su povolene, default vsetky,
-# dalsi parameter su low a high, ze kolko ich chcem nahodne skombinovat, default 1 az vsetky,
-# zoznam noises, to iste, povolene, default vsetky, parametre low high
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a synthetic noisy time series dataset.")
 
