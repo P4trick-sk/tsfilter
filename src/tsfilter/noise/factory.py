@@ -13,7 +13,7 @@ class RandomNoiseFactory:
 
     def sample(self, noise_cls: type[BaseNoise], target: GeneratedSeries | None = None) -> BaseNoise:
         stats = series_stats(target) if target is not None else None
-        space = self.param_spaces.get(noise_cls, {})
-        kwargs = {name: sample_value(self.rng, spec, stats) for name, spec in space.items()}
+        param_space = self.param_spaces.get(noise_cls, {})
+        kwargs = {name: sample_value(self.rng, spec, stats) for name, spec in param_space.items()}
         child_seed = int(self.rng.integers(0, 2 ** 32 - 1))
         return noise_cls(seed=child_seed, **kwargs)
