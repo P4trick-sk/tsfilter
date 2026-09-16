@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -9,9 +8,12 @@ import numpy as np
 from tsfilter.config.param_spaces import load_param_spaces, GENERATOR_REGISTRY, NOISE_REGISTRY
 from tsfilter.generators.factory import RandomGeneratorFactory
 from tsfilter.noise.factory import RandomNoiseFactory
-from tsfilter.dataset.builder import DatasetBuilder
+from tsfilter.dataset.builder import DatasetBuilder, CompositeConfig
 from tsfilter.dataset import storage
 
+# TODO: co ja by som chcel je, ze zadam zoznam generatorov, to su povolene, default vsetky,
+# dalsi parameter su low a high, ze kolko ich chcem nahodne skombinovat, default 1 az vsetky,
+# zoznam noises, to iste, povolene, default vsetky, parametre low high
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a synthetic noisy time series dataset.")
@@ -25,9 +27,14 @@ def parse_args() -> argparse.Namespace:
         help=f"Generator class names to sample from. Available: {list(GENERATOR_REGISTRY.keys())}",
     )
     parser.add_argument(
-        "--noise", nargs="+", default=list(NOISE_REGISTRY.keys()),
+        "--noises", nargs="+", default=list(NOISE_REGISTRY.keys()),
         help=f"Noise class names to sample from. Available: {list(NOISE_REGISTRY.keys())}",
     )
+
+    parser.add_argument("--n-generators-low", type=int, default=1, help="Minimum number of generators to combine")
+    parser.add_argument("--n-generators-high", type=int, default=None, help="Maximum number of generators to combine")
+    parser.add_argument("--n-noises-low", type=int, default=1, help="Minimum number of noises to combine")
+    parser.add_argument("--n-noises-high", type=int, default=None, help="Maximum number of noises to combine")
 
     parser.add_argument(
         "--generator-config", type=Path, default=Path("config/generator_param_spaces.yaml"),
@@ -56,7 +63,7 @@ def main() -> None:
     gen_seed, noise_seed, builder_seed = (int(s.generate_state(1)[0]) for s in seed_seq.spawn(3))
 
     generator_classes = resolve_classes(args.generators, GENERATOR_REGISTRY, "generator")
-    noise_classes = resolve_classes(args.noise, NOISE_REGISTRY, "noise")
+    noise_classes = resolve_classes(args.noises, NOISE_REGISTRY, "noise")
 
     generator_spaces = load_param_spaces(args.generator_config, GENERATOR_REGISTRY)
     noise_spaces = load_param_spaces(args.noise_config, NOISE_REGISTRY)
@@ -66,11 +73,24 @@ def main() -> None:
     )
     noise_factory = RandomNoiseFactory(param_spaces=noise_spaces, seed=noise_seed)
 
+    if args.n_generators_high is None:
+        args.n_generators_high = len(generator_classes)
+    if args.n_noises_high is None:
+        args.n_noises_high = len(noise_classes)
+
+    composite_config = CompositeConfig(
+        n_generators_low=args.n_generators_low,
+        n_generators_high=args.n_generators_high,
+        n_noises_low=args.n_noises_low,
+        n_noises_high=args.n_noises_high,
+    )
+
     builder = DatasetBuilder(
         generator_factory=generator_factory,
         noise_factory=noise_factory,
         generator_classes=generator_classes,
         noise_classes=noise_classes,
+        composite_config=composite_config,
         seed=builder_seed,
     )
 
