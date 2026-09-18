@@ -6,7 +6,7 @@ GaussianNoise:
     floor: 0.05
 
 ImpulsiveNoise:
-  rate: { low: 0.005, high: 0.03 }
+  rate: { low: 0.005, high: 0.01 }
   amplitude_range:
     relative_to: std
     low: 1.0

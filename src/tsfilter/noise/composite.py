@@ -1,8 +1,21 @@
 from __future__ import annotations
 
+from typing import Sequence
+from dataclasses import dataclass
 from tsfilter.noise.base import BaseNoise
+from tsfilter.utils.sampling import ParamRange
 
 import numpy as np
+
+@dataclass
+class MultiNoiseChoice:
+    base: type[BaseNoise]
+    n_components: ParamRange
+
+@dataclass
+class MixedNoiseChoice:
+    candidates: list[type[BaseNoise]]
+    n_components: ParamRange
 
 class CompositeNoise(BaseNoise):
     def __init__(self, noises: Sequence[BaseNoise]):

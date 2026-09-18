@@ -1,9 +1,21 @@
 from __future__ import annotations
 
 from typing import Sequence
+from dataclasses import dataclass
 
 import numpy as np
 from tsfilter.generators.base import BaseGenerator, GeneratedSeries
+from tsfilter.utils.sampling import ParamRange
+
+@dataclass
+class MultiGeneratorChoice:
+    base: type[BaseGenerator]
+    n_components: ParamRange
+
+@dataclass
+class MixedGeneratorChoice:
+    candidates: list[type[BaseGenerator]]
+    n_components: ParamRange
 
 class CompositeGenerator(BaseGenerator):
     def __init__(self, generators: Sequence[BaseGenerator]):

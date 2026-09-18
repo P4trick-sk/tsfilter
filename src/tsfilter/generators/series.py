@@ -119,5 +119,3 @@ class SinusGenerator(BaseGenerator):
                 "seed": self.seed,
             },
         )
-
-# TODO: sum of sinus waves

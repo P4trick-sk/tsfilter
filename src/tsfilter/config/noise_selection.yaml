@@ -1,0 +1,9 @@
+allowed:
+  - GaussianNoise
+  - DriftNoise
+  - PinkNoise
+  - ImpulsiveNoise
+
+mixed:
+  - candidates: [GaussianNoise, DriftNoise, PinkNoise, ImpulsiveNoise]
+    n_components: { low: 2, high: 4 }

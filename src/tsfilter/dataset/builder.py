@@ -1,26 +1,18 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Callable, Sequence
 
 import numpy as np
 
 from tsfilter.generators.base import BaseGenerator, GeneratedSeries
-from tsfilter.generators.composite import CompositeGenerator
+from tsfilter.generators.composite import CompositeGenerator, MultiGeneratorChoice, MixedGeneratorChoice
 from tsfilter.generators.factory import RandomGeneratorFactory
 from tsfilter.noise.base import BaseNoise, NoisySeries
-from tsfilter.noise.composite import CompositeNoise
+from tsfilter.noise.composite import MultiNoiseChoice, MixedNoiseChoice, CompositeNoise
 from tsfilter.noise.factory import RandomNoiseFactory
 from tsfilter.dataset.sample import DatasetSample
 
 Labeler = Callable[[GeneratedSeries, NoisySeries], dict]
-
-@dataclass
-class CompositeConfig:
-    n_generators_low: int
-    n_generators_high: int
-    n_noises_low: int
-    n_noises_high: int
 
 class DatasetBuilder:
     def __init__(
@@ -29,7 +21,6 @@ class DatasetBuilder:
         noise_factory: RandomNoiseFactory,
         generator_classes: Sequence[type[BaseGenerator]],
         noise_classes: Sequence[type[BaseNoise]],
-        composite_config: CompositeConfig,
         labeler: Labeler | None = None,
         seed: int | None = None,
     ):
@@ -38,36 +29,39 @@ class DatasetBuilder:
         self.generator_classes = generator_classes
         self.noise_classes = noise_classes
         self.labeler = labeler
-        self.composite_config = composite_config
         self.rng = np.random.default_rng(seed)
 
     def _sample_generator(self) -> BaseGenerator:
-        n_generators = self.rng.integers(
-            self.composite_config.n_generators_low,
-            self.composite_config.n_generators_high + 1,
-        )
+        choice = self.generator_classes[self.rng.integers(len(self.generator_classes))]
 
-        if n_generators == 1:
-            generator_cls = self.generator_classes[self.rng.integers(len(self.generator_classes))]
-            return self.generator_factory.sample(generator_cls)
+        if isinstance(choice, MultiGeneratorChoice):
+            n = int(self.rng.integers(choice.n_components.low, choice.n_components.high + 1))
+            components = [self.generator_factory.sample(choice.base) for _ in range(n)]
+            return CompositeGenerator(components)
 
-        indices = self.rng.integers(0, len(self.generator_classes), size=n_generators)
-        generators = [self.generator_factory.sample(self.generator_classes[int(index)]) for index in indices]
-        return CompositeGenerator(generators)
+        if isinstance(choice, MixedGeneratorChoice):
+            n = int(self.rng.integers(choice.n_components.low, choice.n_components.high + 1))
+            indices = self.rng.integers(0, len(choice.candidates), size=n)
+            components = [self.generator_factory.sample(choice.candidates[i]) for i in indices]
+            return CompositeGenerator(components)
+
+        return self.generator_factory.sample(choice)
 
     def _sample_noise(self, target: GeneratedSeries) -> BaseNoise:
-        n_noises = self.rng.integers(
-            self.composite_config.n_noises_low,
-            self.composite_config.n_noises_high + 1,
-        )
+        choice = self.noise_classes[self.rng.integers(len(self.noise_classes))]
 
-        if n_noises == 1:
-            noise_cls = self.noise_classes[self.rng.integers(len(self.noise_classes))]
-            return self.noise_factory.sample(noise_cls, target=target)
+        if isinstance(choice, MultiNoiseChoice):
+            n = int(self.rng.integers(choice.n_components.low, choice.n_components.high + 1))
+            components = [self.noise_factory.sample(choice.base, target=target) for _ in range(n)]
+            return CompositeNoise(components)
 
-        indices = self.rng.integers(0, len(self.noise_classes), size=n_noises)
-        noises = [self.noise_factory.sample(self.noise_classes[int(index)], target=target) for index in indices]
-        return CompositeNoise(noises)
+        if isinstance(choice, MixedNoiseChoice):
+            n = int(self.rng.integers(choice.n_components.low, choice.n_components.high + 1))
+            indices = self.rng.integers(0, len(choice.candidates), size=n)
+            components = [self.noise_factory.sample(choice.candidates[i], target=target) for i in indices]
+            return CompositeNoise(components)
+
+        return self.noise_factory.sample(choice, target=target)
 
     def _build_one(self) -> DatasetSample:
         generator = self._sample_generator()
@@ -76,7 +70,6 @@ class DatasetBuilder:
         noisy = noise.apply(clean)
 
         label = self.labeler(clean, noisy) if self.labeler is not None else None
-
         return DatasetSample(clean=clean, noisy=noisy, label=label)
 
     def build(self, n_samples: int) -> list[DatasetSample]:

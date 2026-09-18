@@ -1,0 +1,9 @@
+allowed:
+  - TrendGenerator
+  - RandomWalkGenerator
+  - SinusGenerator
+  - ConstantGenerator
+
+multi:
+  - base: SinusGenerator
+    n_components: { low: 2, high: 5 }

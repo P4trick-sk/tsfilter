@@ -5,10 +5,11 @@ from pathlib import Path
 
 import numpy as np
 
-from tsfilter.config.param_spaces import load_param_spaces, GENERATOR_REGISTRY, NOISE_REGISTRY
+from tsfilter.config.param_spaces import load_param_spaces, GENERATOR_REGISTRY, NOISE_REGISTRY, \
+    load_generator_selection, load_noise_selection
 from tsfilter.generators.factory import RandomGeneratorFactory
 from tsfilter.noise.factory import RandomNoiseFactory
-from tsfilter.dataset.builder import DatasetBuilder, CompositeConfig
+from tsfilter.dataset.builder import DatasetBuilder
 from tsfilter.dataset import storage
 
 def parse_args() -> argparse.Namespace:
@@ -27,10 +28,16 @@ def parse_args() -> argparse.Namespace:
         help=f"Noise class names to sample from. Available: {list(NOISE_REGISTRY.keys())}",
     )
 
-    parser.add_argument("--n-generators-low", type=int, default=1, help="Minimum number of generators to combine")
-    parser.add_argument("--n-generators-high", type=int, default=None, help="Maximum number of generators to combine")
-    parser.add_argument("--n-noises-low", type=int, default=1, help="Minimum number of noises to combine")
-    parser.add_argument("--n-noises-high", type=int, default=None, help="Maximum number of noises to combine")
+    parser.add_argument(
+        "--generator-selection", type=Path,
+        help="YAML: which generators are allowed, plus optional multi/mixed composite entries",
+        default=Path("config/generator_selection.yaml")
+    )
+    parser.add_argument(
+        "--noise-selection", type=Path,
+        help="YAML: which noises are allowed, plus optional multi/mixed composite entries",
+        default=Path("config/noise_selection.yaml")
+    )
 
     parser.add_argument(
         "--generator-config", type=Path, default=Path("config/generator_param_spaces.yaml"),
@@ -45,21 +52,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def resolve_classes(names: list[str], registry: dict, kind: str) -> list[type]:
-    unknown = [n for n in names if n not in registry]
-    if unknown:
-        raise ValueError(f"Unknown {kind} name(s): {unknown}. Available: {list(registry.keys())}")
-    return [registry[n] for n in names]
-
-
 def main() -> None:
     args = parse_args()
 
     seed_seq = np.random.SeedSequence(args.seed)
     gen_seed, noise_seed, builder_seed = (int(s.generate_state(1)[0]) for s in seed_seq.spawn(3))
 
-    generator_classes = resolve_classes(args.generators, GENERATOR_REGISTRY, "generator")
-    noise_classes = resolve_classes(args.noises, NOISE_REGISTRY, "noise")
+    generator_classes = load_generator_selection(args.generator_selection)
+    noise_classes = load_noise_selection(args.noise_selection)
 
     generator_spaces = load_param_spaces(args.generator_config, GENERATOR_REGISTRY)
     noise_spaces = load_param_spaces(args.noise_config, NOISE_REGISTRY)
@@ -69,24 +69,11 @@ def main() -> None:
     )
     noise_factory = RandomNoiseFactory(param_spaces=noise_spaces, seed=noise_seed)
 
-    if args.n_generators_high is None:
-        args.n_generators_high = len(generator_classes)
-    if args.n_noises_high is None:
-        args.n_noises_high = len(noise_classes)
-
-    composite_config = CompositeConfig(
-        n_generators_low=args.n_generators_low,
-        n_generators_high=args.n_generators_high,
-        n_noises_low=args.n_noises_low,
-        n_noises_high=args.n_noises_high,
-    )
-
     builder = DatasetBuilder(
         generator_factory=generator_factory,
         noise_factory=noise_factory,
         generator_classes=generator_classes,
         noise_classes=noise_classes,
-        composite_config=composite_config,
         seed=builder_seed,
     )
 
