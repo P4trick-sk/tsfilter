@@ -28,13 +28,3 @@ DriftNoise:
     low: 0.1
     high: 1.0
     floor: 0.1
-
-OutlierNoise:
-  rate: { low: 0.01, high: 0.05 }
-  magnitude_std:
-    relative_to: std
-    low: 3.0
-    high: 4.0
-    high_low: 5.0
-    high_high: 6.0
-    floor: 1.0

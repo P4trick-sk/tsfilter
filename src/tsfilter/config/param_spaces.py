@@ -8,7 +8,7 @@ from tsfilter.generators.series import (
     TrendGenerator, SinusGenerator, RandomWalkGenerator, ConstantGenerator, ExponentialGenerator,
 )
 from tsfilter.noise.composite import MultiNoiseChoice, MixedNoiseChoice
-from tsfilter.noise.noise import GaussianNoise, ImpulsiveNoise, PinkNoise, DriftNoise, OutlierNoise
+from tsfilter.noise.noise import GaussianNoise, ImpulsiveNoise, PinkNoise, DriftNoise
 from tsfilter.utils.sampling import ParamRange, RelativeParamRange
 
 GENERATOR_REGISTRY = {
@@ -24,7 +24,6 @@ NOISE_REGISTRY = {
     "ImpulsiveNoise": ImpulsiveNoise,
     "PinkNoise": PinkNoise,
     "DriftNoise": DriftNoise,
-    "OutlierNoise": OutlierNoise,
 }
 
 def _parse_spec(spec):
