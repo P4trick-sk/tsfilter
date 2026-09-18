@@ -59,7 +59,6 @@ def _generated_series_to_dict(series: GeneratedSeries) -> dict:
 def _noisy_series_to_dict(series: NoisySeries) -> dict:
     return {
         "values": series.values.tolist(),
-        "clean": _generated_series_to_dict(series.clean),
         "params": series.params,
     }
 
