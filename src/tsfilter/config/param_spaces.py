@@ -35,6 +35,7 @@ def _parse_spec(spec):
             relative_to=spec["relative_to"],
             high_low=spec.get("high_low"),
             high_high=spec.get("high_high"),
+            floor=spec.get("floor"),
         )
     return ParamRange(spec["low"], spec["high"])
 
