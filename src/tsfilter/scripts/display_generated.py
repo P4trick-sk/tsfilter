@@ -15,7 +15,7 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument(
 		"--data-dir",
 		type=Path,
-		default=Path(__file__).resolve().parents[1] / "data",
+		default=Path(__file__).resolve().parents[1] / "data_output",
 		help="Directory containing CSV files to plot.",
 	)
 	parser.add_argument(
