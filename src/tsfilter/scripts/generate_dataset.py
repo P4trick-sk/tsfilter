@@ -20,15 +20,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=None, help="Master seed for the whole run")
 
     parser.add_argument(
-        "--generators", nargs="+", default=list(GENERATOR_REGISTRY.keys()),
-        help=f"Generator class names to sample from. Available: {list(GENERATOR_REGISTRY.keys())}",
-    )
-    parser.add_argument(
-        "--noises", nargs="+", default=list(NOISE_REGISTRY.keys()),
-        help=f"Noise class names to sample from. Available: {list(NOISE_REGISTRY.keys())}",
-    )
-
-    parser.add_argument(
         "--generator-selection", type=Path,
         help="YAML: which generators are allowed, plus optional multi/mixed composite entries",
         default=Path("config/generator_selection.yaml")
