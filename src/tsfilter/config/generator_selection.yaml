@@ -1,8 +1,15 @@
-allowed:
-  - RandomWalkGenerator
-  - SinusGenerator
-  - ConstantGenerator
+#allowed:
+# - RandomWalkGenerator
+#  - SinusGenerator
+ # - ExponentialGenerator
 
 multi:
-  - base: SinusGenerator
+  - name: MultiSinusGenerator
+    base: SinusGenerator
     n_components: { low: 2, high: 5 }
+
+mixed:
+  - candidates: [TrendGenerator, RandomWalkGenerator, SinusGenerator, MultiSinusGenerator, RandomWalkGenerator, ExponentialGenerator]
+    n_components: { low: 2, high: 4 }
+  - candidates: [RandomWalkGenerator, SinusGenerator, MultiSinusGenerator, RandomWalkGenerator, ExponentialGenerator]
+    n_components: { low: 1, high: 4 }

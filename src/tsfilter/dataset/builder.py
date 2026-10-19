@@ -31,9 +31,7 @@ class DatasetBuilder:
         self.labeler = labeler
         self.rng = np.random.default_rng(seed)
 
-    def _sample_generator(self) -> BaseGenerator:
-        choice = self.generator_classes[self.rng.integers(len(self.generator_classes))]
-
+    def _sample_entry(self, choice: BaseGenerator) -> BaseGenerator:
         if isinstance(choice, MultiGeneratorChoice):
             n = int(self.rng.integers(choice.n_components.low, choice.n_components.high + 1))
             components = [self.generator_factory.sample(choice.base) for _ in range(n)]
@@ -42,10 +40,14 @@ class DatasetBuilder:
         if isinstance(choice, MixedGeneratorChoice):
             n = int(self.rng.integers(choice.n_components.low, choice.n_components.high + 1))
             indices = self.rng.integers(0, len(choice.candidates), size=n)
-            components = [self.generator_factory.sample(choice.candidates[i]) for i in indices]
+            components = [self._sample_entry(choice.candidates[i]) for i in indices]
             return CompositeGenerator(components)
 
         return self.generator_factory.sample(choice)
+
+    def _sample_generator(self):
+        choice = self.generator_classes[self.rng.integers(len(self.generator_classes))]
+        return self._sample_entry(choice)
 
     def _sample_noise(self, target: GeneratedSeries) -> BaseNoise:
         choice = self.noise_classes[self.rng.integers(len(self.noise_classes))]

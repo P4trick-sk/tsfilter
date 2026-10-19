@@ -63,22 +63,36 @@ def _load_selection(path: str | Path, registry: dict, multi_cls, mixed_cls) -> l
             raise ValueError(f"Unknown '{name}' in allowed list — check the registry")
         selection.append(registry[name])
 
+    multi_by_name = {}
     for entry in raw.get("multi", []):
         if entry["base"] not in registry:
             raise ValueError(f"Unknown base '{entry['base']}' in multi entry")
-        selection.append(multi_cls(
+
+        choice = multi_cls(
             base=registry[entry["base"]],
             n_components=ParamRange(entry["n_components"]["low"], entry["n_components"]["high"]),
-        ))
+        )
+        selection.append(choice)
+
+        if entry["name"]:
+            multi_by_name[entry["name"]] = choice
 
     for entry in raw.get("mixed", []):
-        unknown = [n for n in entry["candidates"] if n not in registry]
-        if unknown:
-            raise ValueError(f"Unknown candidate(s) {unknown} in mixed entry")
-        selection.append(mixed_cls(
-            candidates=[registry[n] for n in entry["candidates"]],
-            n_components=ParamRange(entry["n_components"]["low"], entry["n_components"]["high"]),
-        ))
+        for candidate in entry["candidates"]:
+            parsed_candidates =  []
+            if candidate in registry:
+                parsed_candidates.append(registry[candidate])
+            elif candidate in multi_by_name:
+                parsed_candidates.append(multi_by_name[candidate])
+            else:
+                raise ValueError(f"Unknown candidate(s) {candidate} in mixed entry")
+
+            choice = mixed_cls(
+                candidates=parsed_candidates,
+                n_components=ParamRange(entry["n_components"]["low"], entry["n_components"]["high"]),
+            )
+
+            selection.append(choice)
 
     if not selection:
         raise ValueError(f"{path} produced an empty selection — nothing to sample from")
