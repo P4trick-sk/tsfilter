@@ -56,7 +56,7 @@ class FilterPredictor(nn.Module):
         parts = []
 
         if self.use_signal:
-            parts.append(self.signal_branch(signal))
+            parts.append(self.signal_branch(signal.unsqueeze(1)))
         if self.use_features:
             parts.append(self.feature_branch(features))
 
