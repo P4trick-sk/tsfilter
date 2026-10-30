@@ -20,15 +20,15 @@ def print_distribution(counts, title: str) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Show how evenly filter methods win in a labelled dataset.")
     parser.add_argument("--labels", type=Path, required=True, help="Evaluator json export")
-    parser.add_argument("--level", choices=["family", "winner", "both"], default="family",
-                        help="family = method only, winner = method + parameters")
+    parser.add_argument("--level", choices=["filter_class", "winner", "both"], default="filter_class",
+                        help="filter_class = method only, winner = method + parameters")
     parser.add_argument("--plot", type=Path, help="Optional path to save a bar chart (png)")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    levels = ["family", "winner"] if args.level == "both" else [args.level]
+    levels = ["filter_class", "winner"] if args.level == "both" else [args.level]
 
     for level in levels:
         print_distribution(get_distribution(load_labels(args.labels, level)), f"Distribution by {level}")
