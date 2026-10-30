@@ -17,7 +17,25 @@ from tsfilter.models.network import FilterPredictor
 
 # ---- data -------------------------------------------------------------------
 
-def split_train_validation(targets: np.ndarray, validation_fraction: float, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
+def sample_per_class(
+        targets: np.ndarray,
+        samples_per_class: int,
+        rng: np.random.Generator
+) -> np.ndarray:
+    selected_idx = []
+
+    for cls in np.unique(targets):
+        members = rng.permutation(np.where(targets == cls)[0])
+        selected_idx.extend(members[:samples_per_class]) # ak ma trieda menej vzoriek, zoberieme vsetky
+
+    return np.array(selected_idx)
+
+
+def split_train_validation(
+        targets: np.ndarray,
+        validation_fraction: float,
+        rng: np.random.Generator
+) -> tuple[np.ndarray, np.ndarray]:
     train_idx, validation_idx = [], []
 
     for cls in np.unique(targets):
@@ -31,10 +49,23 @@ def split_train_validation(targets: np.ndarray, validation_fraction: float, rng:
     return np.array(train_idx), np.array(validation_idx)
 
 
-def make_loaders(args: argparse.Namespace, rng: np.random.Generator) -> tuple[DataLoader, DataLoader, list[str], np.ndarray, np.ndarray]:
-    signals, features, labels = load_samples(args.signals_dir, args.labels)
+def make_loaders(
+        signals_dir: Path,
+        labels_path: Path,
+        validation_fraction: float,
+        samples_per_class: int,
+        batch_size: int,
+        normalize_data: bool,
+        rng: np.random.Generator
+) -> tuple[DataLoader, DataLoader, list[str], np.ndarray, np.ndarray]:
+    signals, features, labels = load_samples(signals_dir, labels_path)
     classes, targets = np.unique(labels, return_inverse=True)
-    train_idx, validation_idx = split_train_validation(targets, args.validation_fraction, rng)
+
+    selected_idx = sample_per_class(targets, samples_per_class, rng)
+    signals, features, targets = signals[selected_idx], features[selected_idx], targets[selected_idx]
+    print(f"Samples per class: {dict(zip(classes, np.bincount(targets, minlength=len(classes))))}")
+
+    train_idx, validation_idx = split_train_validation(targets, validation_fraction, rng)
 
     features_mean = features[train_idx].mean(axis=0)
     features_std = features[train_idx].std(axis=0) + 1e-8
@@ -46,17 +77,20 @@ def make_loaders(args: argparse.Namespace, rng: np.random.Generator) -> tuple[Da
             targets[idx],
             features_mean,
             features_std,
-            normalize=not args.no_normalize_data
+            normalize=normalize_data
         )
 
-        return DataLoader(dataset, batch_size=args.batch_size, shuffle=shuffle)
+        return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
     print(f"Loaded {len(targets)} samples (train {len(train_idx)}, validation {len(validation_idx)}), classes: {classes}")
 
     return loader_of(train_idx, True), loader_of(validation_idx, False), classes.tolist(), features_mean, features_std
 
 
-def predict(model: FilterPredictor, loader: DataLoader) -> tuple[np.ndarray, np.ndarray]:
+def predict(
+        model: FilterPredictor,
+        loader: DataLoader
+) -> tuple[np.ndarray, np.ndarray]:
     model.eval()
     true, predicted = [], []
 
@@ -75,7 +109,12 @@ def validation_score(model: FilterPredictor, loader: DataLoader) -> float:
 
 # -- trening --
 
-def train_one_epoch(model: FilterPredictor, loader: DataLoader, loss_fn: nn.Module, optimizer: torch.optim.Optimizer) -> None:
+def train_one_epoch(
+        model: FilterPredictor,
+        loader: DataLoader,
+        loss_fn: nn.Module,
+        optimizer: torch.optim.Optimizer
+) -> None:
     model.train() # mód pre dropout a batchnorm
 
     for signal, features, target in loader: # nie iba jeden signál, ale batch
@@ -84,16 +123,21 @@ def train_one_epoch(model: FilterPredictor, loader: DataLoader, loss_fn: nn.Modu
         loss.backward()
         optimizer.step()
 
-def train(model: FilterPredictor, train_loader: DataLoader, validation_loader: DataLoader, loss_fn: nn.Module,
-          args: argparse.Namespace) -> float:
+def train(
+        model: FilterPredictor,
+        train_loader: DataLoader,
+        validation_loader: DataLoader,
+        loss_fn: nn.Module,
+        learning_rate: float, epochs: int
+) -> float:
     optimizer = torch.optim.Adam(
         model.parameters(), # ktore parametre optimalizujeme
-        lr=args.learning_rate,
+        lr=learning_rate,
         weight_decay=1e-4
     )
     best_score, best_state = -1.0, None
 
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(1, epochs + 1):
         train_one_epoch(model, train_loader, loss_fn, optimizer)
         score = validation_score(model, validation_loader)
 
@@ -107,6 +151,29 @@ def train(model: FilterPredictor, train_loader: DataLoader, validation_loader: D
     model.load_state_dict(best_state)
     return best_score
 
+
+def run_experiment(
+        train_loader: DataLoader,
+        validation_loader: DataLoader,
+        classes: list[str],
+        architecture: dict,
+        learning_rate: float,
+        epochs: int,
+        seed: int
+) -> tuple[FilterPredictor, float]:
+    torch.manual_seed(seed)
+
+    model = FilterPredictor(
+        n_features = len(FEATURE_NAMES),
+        n_classes = len(classes),
+        **architecture
+    )
+
+    print(f"Architecture {architecture}, {sum(p.numel() for p in model.parameters())} learnable numbers")
+
+    best_score = train(model, train_loader, validation_loader, nn.CrossEntropyLoss(), learning_rate, epochs)
+
+    return model, best_score
 
 # --- report a ulozenie
 
@@ -139,6 +206,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=32, help="Samples the network sees before each adjustment")
     parser.add_argument("--learning-rate", type=float, default=1e-3, help="Learning rate: size of each adjustment")
     parser.add_argument("--validation-fraction", type=float, default=0.2, help="Share of samples held out for testing")
+    parser.add_argument("--samples-per-class", type=int, default=250, help="Randomly pick at most this many samples of each class (smaller classes are kept whole)")
 
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--features-only", action="store_true",help="Leave out the CNN, use only the hand-made features (baseline)")
@@ -157,9 +225,16 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    torch.manual_seed(args.seed)
 
-    train_loader, validation_loader, classes, feature_mean, feature_std = make_loaders(args, np.random.default_rng(args.seed))
+    train_loader, validation_loader, classes, feature_mean, feature_std = make_loaders(
+        args.signals_dir,
+        args.labels,
+        args.validation_fraction,
+        args.samples_per_class,
+        args.batch_size,
+        not args.no_normalize_data,
+        np.random.default_rng(args.seed)
+    )
 
     architecture = {
         "use_signal": not args.features_only,
@@ -172,16 +247,15 @@ def main() -> None:
         "batch_norm": not args.no_normalize_batch,
     }
 
-    model = FilterPredictor(
-        n_features = len(FEATURE_NAMES),
-        n_classes = len(classes),
-        **architecture
+    model, best_score = run_experiment(
+        train_loader,
+        validation_loader,
+        classes,
+        architecture,
+        args.learning_rate,
+        args.epochs,
+        args.seed
     )
-
-    print(f"Architecture {architecture}, {sum(p.numel() for p in model.parameters())} learnable numbers")
-
-    loss_fn = nn.CrossEntropyLoss()
-    best_score = train(model, train_loader, validation_loader, loss_fn, args)
 
     print_report(model, validation_loader, classes, best_score)
     save_model(model, classes, feature_mean, feature_std, not args.no_normalize_data, architecture, args.output)

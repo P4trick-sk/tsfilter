@@ -15,6 +15,7 @@ def load_samples(signals_dir: str | Path, labels_json: str | Path):
     labels = load_labels(labels_json, level="filter_class")
 
     signals, features, filter_classes = [], [], []
+    skipped = []
 
     for sample_id, filter_class in sorted(labels.items()):
         csv_path = Path(signals_dir) / f"{sample_id}.csv"
@@ -23,9 +24,19 @@ def load_samples(signals_dir: str | Path, labels_json: str | Path):
             continue
 
         noisy = pd.read_csv(csv_path)["noisy"].to_numpy(dtype=np.float32)
+        sample_features = extract_features(noisy)
+
+        # nan alebo inf by pokazili trening (loss = NaN)
+        if not np.isfinite(noisy).all() or not np.isfinite(sample_features).all():
+            skipped.append(sample_id)
+            continue
+
         signals.append(noisy)
-        features.append(extract_features(noisy))
+        features.append(sample_features)
         filter_classes.append(filter_class)
+
+    if skipped:
+        print(f"Skipped {len(skipped)} samples with nan or inf values")
 
     return np.stack(signals), np.stack(features), filter_classes
 
